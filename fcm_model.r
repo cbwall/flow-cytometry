@@ -1,10 +1,16 @@
-setwd("~/bowman_lab/sandbox")
+# Load in packages
+if (!require("pacman")) install.packages("pacman"); library(pacman) 
+# for rapid install if not in library
+
+pacman::p_load("hexbin", "oce", "kohonen", "flowCore")
+
+
 
 #### general parameters ####
 
 stain = 'SG' # indicate AF or SG
-output <- 'SCCOOS_SG'                   # identifier for output files
-data.path <- './'                     # make sure this ends with "/"
+output <- 'Pyro'                   # identifier for output files
+data.path <- 'data/'                    # make sure this ends with "/"
 f.list <- list.files(path = data.path,
                      pattern = '*fcs',
                      ignore.case = F)      # list of fcs files to analyze
@@ -63,8 +69,6 @@ FL5.beads.llimit <- 3.3
 
 #### aggregation and QC ####
 
-library(hexbin)
-library('flowCore')
 
 if(stain == 'AF'){
 
@@ -86,6 +90,7 @@ if(stain == 'SG'){
   
   colnames(training.events) <- c("FSC-HLin", "SSC-HLin", "BLU-V-HLin", "GRN-B-HLin")
 }
+
 
 ## I've kept the sample size in here for now, but much better to select 1-2 representative
 ## samples for the model.  You need to avoid too many points that "fill in" the

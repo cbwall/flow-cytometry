@@ -2,10 +2,14 @@
 ## model developed by fcm_model_SG.r or fcm_model_AF.r).  This is a good
 ## way to test the efficacy of the segmentation model.
 
-library(Rtsne)
-library('oce')
 
-load('sccoos_SG.som.Rdata')
+# Load in packages
+if (!require("pacman")) install.packages("pacman"); library(pacman) # for rapid install if not in library
+
+pacman::p_load("Rtsne", "oce", "ggplot2")
+
+
+load('SCOOS/SCCOOS_SG.20200704_155059.som.Rdata')
 
 data <- as.data.frame(som.model$data)
 deduped.index <- which(duplicated(data) != T)
@@ -42,3 +46,4 @@ dim.cor <- as.data.frame(cbind(dim.1.cor, dim.2.cor))
 
 colnames(dim.cor) <- c('dim.1', 'dim.2')
 row.names(dim.cor) <- colnames(data)
+
