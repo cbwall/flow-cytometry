@@ -8,20 +8,25 @@ pacman::p_load("hexbin", "oce", "kohonen", "flowCore")
 
 #### general parameters ####
 
-stain = 'SG' # indicate AF or SG
-output <- 'Pyro'                   # identifier for output files
-data.path <- 'data/'                    # make sure this ends with "/"
+stain = 'sg' # indicate 'af' or 'sg'
+
+output <- 'Pyro'                   # identifier for output file names
+data.path <- 'data/'
+output.af<-'output/af/'            # identifier for output file directory
+output.sg<-'output/sg/'            # identifier for output file directory
+
+# make sure this ends with "/"
 f.list <- list.files(path = data.path,
                      pattern = '*fcs',
                      ignore.case = F)      # list of fcs files to analyze
 					 
 ## what channels should be used?
 
-if(stain == 'AF'){
+if(stain == 'af'){
   params <- c("FSC-HLin", "SSC-HLin", "BLU-V-HLin", "YEL-B-HLin", "RED-V-HLin", "RED-B-HLin")
 }
 
-if(stain == 'SG'){
+if(stain == 'sg'){
   params <- c("FSC-HLin", "SSC-HLin", "BLU-V-HLin", "GRN-B-HLin")
 }
 
@@ -70,7 +75,7 @@ FL5.beads.llimit <- 3.3
 #### aggregation and QC ####
 
 
-if(stain == 'AF'){
+if(stain == 'af'){
 
   training.events <- data.frame(`FSC-HLin` = numeric(),
                                 `SSC-HLin` = numeric(),
@@ -82,7 +87,7 @@ if(stain == 'AF'){
   colnames(training.events) <- c("FSC-HLin", "SSC-HLin", "BLU-V-HLin", "YEL-B-HLin", "RED-V-HLin", "RED-B-HLin")
 }
 
-if(stain == 'SG'){
+if(stain == 'sg'){
   training.events <- data.frame(`FSC-HLin` = numeric(),
                                 `SSC-HLin` = numeric(),
                                 `BLU-V-HLin` = numeric(),
@@ -100,7 +105,8 @@ if(stain == 'SG'){
 ## and the model could be rebuilt if there are populations that are not included.
 
 #sample.size <- 6000 # size to sample from each for training data
-training.samples <- c('SG') # names of samples to add to training data.  Avoid adding too many.
+
+training.samples <- c('sg') # names of samples to add to training data.  Avoid adding too many.
 
 ## Iterate across all FCS files, performing QC, making plots,
 ## and taking a random selection of QC'd data for training.
@@ -108,7 +114,10 @@ training.samples <- c('SG') # names of samples to add to training data.  Avoid a
 #f.name <- f.list[25]
 #grep('blank', f.list)
 
-pdf(paste0(output, '_fcm_plots.pdf'),
+#################### specify "af" or "sg"
+#################### 
+
+pdf(paste0(output.sg, output, '_sg_fcm_plots.pdf'),
     width = 5,
     height = 5)
 
@@ -123,7 +132,8 @@ for(fcs in c(f.list)){
     fcm <- read.FCS(paste0(data.path, fcs), emptyValue = F, dataset = i)
     f.name <- fcm@description$`GTI$SAMPLEID`
     
-    f.name <- sub('SYBR', 'SG', f.name)
+#################### specify "af" or "sg", done here by using "stain"
+    f.name <- sub('SYBR', stain, f.name)
     
     ## If it's the last record in the file, stop loop after this iteration.
     
@@ -160,12 +170,12 @@ for(fcs in c(f.list)){
       
       ## Make plots of all events.
       
-      if(stain == 'AF'){
+      if(stain == 'af'){
         plot.fcm(f.name, fcm, fcm.beads, x='FSC-HLin', y='RED-V-HLin')
         plot.fcm(f.name, fcm, fcm.beads, x = 'YEL-B-HLin', y = 'RED-V-HLin')
       }
       
-      if(stain == 'SG'){
+      if(stain == 'sg'){
         plot.fcm(f.name, fcm, fcm.beads, x='FSC-HLin', y='GRN-B-HLin')
       }
     
@@ -174,22 +184,22 @@ for(fcs in c(f.list)){
       fcm <- fcm[log10(fcm$`FSC-HLin`) > FSC.llimit,]
       fcm <- fcm[log10(fcm$`SSC-HLin`) > SSC.llimit,]
       
-      if(stain == 'AF'){
+      if(stain == 'af'){
         fcm <- fcm[log10(fcm$`RED-V-HLin`) > RED.V.HLin.llimit,]
       }
       
-      if(stain == 'SG'){
+      if(stain == 'sg'){
         fcm <- fcm[log10(fcm$`GRN-B-HLin`) > GRN.B.HLin.llimit,]
       }
       
       ## Make plots of only those events remaining.
       
-      if(stain == 'AF'){
+      if(stain == 'af'){
         plot.fcm(paste(f.name, 'QC'), fcm, fcm.beads, x='FSC-HLin', y='RED-V-HLin')
         plot.fcm(paste(f.name, 'QC'), fcm, fcm.beads, x = 'YEL-B-HLin', y = 'RED-V-HLin')
       }
       
-      if(stain == 'SG'){
+      if(stain == 'sg'){
         plot.fcm(paste(f.name, 'QC'), fcm, fcm.beads, x='FSC-HLin', y='GRN-B-HLin')
       }
       
@@ -208,14 +218,21 @@ for(fcs in c(f.list)){
         training.events<- rbind(training.events, fcm[,colnames(training.events)])
       }
       
-      write.csv(fcm, paste0(f.name, '.qc.csv'), quote = F)
+      ################### specify the output location, sg of af
+      write.csv(fcm, paste0(output.sg, f.name, '.qc.csv'), quote = F)
+      ################### 
     }
   }
 }
 
 dev.off()
 
-write.csv(training.events, paste0(output, '.training_events.csv'), quote = F)
+################### specify the output location, sg of af
+write.csv(training.events, paste0(output.sg, '.training_events.csv'), quote = F)
+################### 
+
+
+
 
 #### model training and selection ####
 
@@ -351,12 +368,12 @@ pdf(paste0(output, '.cluster_eval.pdf'), width = 5, height = 5)
 
 for(j in (k-2):(k+2)){
   
-  if(stain == 'AF'){
+  if(stain == 'af'){
     plot.param.1 = 'YEL.B.HLin'
     plot.param.2 = 'RED.V.HLin'
   }
   
-  if(stain == 'SG'){
+  if(stain == 'sg'){
     plot.param.1 = 'FSC.HLin'
     plot.param.2 = 'GRN.B.HLin'
   }
